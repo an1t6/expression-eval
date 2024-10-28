@@ -5,8 +5,8 @@ import threading
 from datetime import datetime
 
 start_time = datetime.now()
-
-def setup_logging(client_num):
+ # -------------- log 출력 함수
+def setup_logging(client_num):     
     logger = logging.getLogger(f"Client{client_num}")
     logger.setLevel(logging.INFO)
     handler = logging.FileHandler(f"Client{client_num}.txt", mode='w', encoding='utf-8')
@@ -19,26 +19,26 @@ def setup_logging(client_num):
 def load_expressions(expression_file):
     with open(expression_file, 'r', encoding='utf-8') as f:
         return f.read().splitlines()
-
+# -------- system clock 계산 함수
 def get_system_time():
     return (datetime.now() - start_time).total_seconds() * 1000    
-
-def send_task(server_host, server_port, client_num, expression, logger):
-    start_time = get_system_time()  # 작업 전송 시작 시간 기록
-    send_time = round(start_time + 1, 1)
+# --------------- 작업 요청 함수
+def send_task(server_host, server_port, client_num, expression, logger):           
+    start_time = get_system_time()          # 작업 시작 시간
+    send_time = round(start_time + 1, 1)        # 전송 시간
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         client_socket.connect((server_host, server_port))
         message = f"{client_num}:{expression}"
         logger.info(f"[System Clock : {round(start_time, 1)}ms] [클라이언트 {client_num}] 서버에 작업 {expression} 처리를 요청. 소요된 시간 1ms")
         client_socket.send(message.encode())
         response = client_socket.recv(1024).decode()
-        wait_time = round(get_system_time() - start_time, 1)  # 응답 대기 시간 계산
+        wait_time = round(get_system_time() - start_time, 1)  # 대기 시간
         
         return response, send_time, wait_time
-
+# -------------- 작업 리턴 함수
 def receive_task(server_host, server_port, expression_file, client_num):
     task = load_expressions(expression_file)
-    re_task = []
+    re_task = []            # 거절 당한 작업을 저장
     re_count = 0
     total_wait_time = 0
     logger = setup_logging(client_num)
@@ -46,7 +46,6 @@ def receive_task(server_host, server_port, expression_file, client_num):
     for expression in task:
         if expression in re_task:
             re_task.remove(expression)
-    
         response, send_time, wait_time = send_task(server_host, server_port, client_num, expression, logger) # send_task에서 전송 시간과 대기 시간 반환
         
         if response == "작업이 거부되었습니다":
