@@ -43,6 +43,8 @@ def insert_client(client_socket, client_num, expression): # 클라이언트별 �
 def waiting_thread(server_socket, logger):
     while True:
         client_socket, client_address = server_socket.accept()
+        
+        print(f"Client {client_address[0]}:{client_address[1]} 접속 완료")
         request = client_socket.recv(1024).decode()     # 클라이언트로부터 요청 전송받음
         client_num, expression = request.split(":", 1)
 
